@@ -19,6 +19,8 @@ var player = {
     object: false
 };
 
+var enemies = new Array();
+
 var bullets = new Array();
 
 var speed = 5;
@@ -70,6 +72,15 @@ function init(){
 
     } );
     
+    var loader = new THREE.OBJMTLLoader();
+    loader.load( 'models/aliens/alien1/alien1.obj', 'models/aliens/alien1/alien1.mtl', function ( object ) {
+            enemies[0] = object;
+            enemies[0].position.y = 0;
+            enemies[0].rotation.x = Math.abs(90*(Math.PI/180));
+            enemies[0].scale.set(0.009,0.009,0.009);
+            scene.add( object );    
+    } );
+        
     window.addEventListener( "keydown", KeyDown, true);
     window.addEventListener( "keyup", KeyUp, true);
     //To use enter the axis length
@@ -81,10 +92,24 @@ function loop(){
     
     requestAnimationFrame(loop);
     
+    
+    //Simple animation of bullets and collision
     for (index = 0; index < bullets.length; index++) 
     {
         bullets[index].position.y += 0.2 * speed;
-        if(bullets[index].position.y > 20){
+        
+        for(x = 0; x < enemies.length; x++)
+        {
+            if(bullets[index].position.y < enemies[x].position.y + 2 && bullets[index].position.x < enemies[x].position.x + 3 && bullets[index].position.y > enemies[x].position.y - 2 && bullets[index].position.x > enemies[x].position.x - 3)
+            {
+                scene.remove(enemies[x]);
+                enemies.splice(x, 1);
+                scene.remove(bullets[index]);
+                bullets.splice(index, 1);
+            }
+        }
+        
+        if(bullets[index].position.y > 40){
             scene.remove(bullets[index]);
             bullets.splice(index, 1);
         }
@@ -108,12 +133,6 @@ function shoot(){
 function KeyDown(e){
     switch(e.keyCode)
     {
-        /*case 38: 
-                player.object.position.y += 0.2;
-                break;
-        case 40: 
-                player.object.position.y -= 0.2; 
-                break;*/
         case 39:
                 player.object.position.x += 0.1 * speed;
                 
@@ -149,24 +168,4 @@ function KeyUp(e){
         
         
     };
-};
-
-var debugaxis = function(axisLength){
-    //Shorten the vertex function
-    function v(x,y,z){ 
-            return new THREE.Vertex(new THREE.Vector3(x,y,z)); 
-    }
-    
-    //Create axis (point1, point2, colour)
-    function createAxis(p1, p2, color){
-            var line, lineGeometry = new THREE.Geometry(),
-            lineMat = new THREE.LineBasicMaterial({color: color, lineWidth: 1});
-            lineGeometry.vertices.push(p1, p2);
-            line = new THREE.Line(lineGeometry, lineMat);
-            scene.add(line);
-    }
-    
-    createAxis(v(-axisLength, 0, 0), v(axisLength, 0, 0), 0xFF0000);
-    createAxis(v(0, -axisLength, 0), v(0, axisLength, 0), 0x00FF00);
-    createAxis(v(0, 0, -axisLength), v(0, 0, axisLength), 0x0000FF);
 };
