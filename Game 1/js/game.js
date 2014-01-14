@@ -19,6 +19,10 @@ var player = {
     object: false
 };
 
+var bullets = new Array();
+
+var speed = 5;
+
 function init(){
     // Create the scene and set the scene size.
     scene = new THREE.Scene();
@@ -61,42 +65,108 @@ function init(){
     var loader = new THREE.OBJMTLLoader();
     loader.load( 'models/player/player.obj', 'models/player/player.mtl', function ( object ) {
             player.object = object;
-            player.object.position.y = 0;
+            player.object.position.y = -40;
             scene.add( object );
 
     } );
     
     window.addEventListener( "keydown", KeyDown, true);
-    
+    window.addEventListener( "keyup", KeyUp, true);
+    //To use enter the axis length
+    //debugaxis(50);
     loop();
 };
 
 function loop(){
     
     requestAnimationFrame(loop);
- 
+    
+    for (index = 0; index < bullets.length; index++) 
+    {
+        bullets[index].position.y += 0.2 * speed;
+        if(bullets[index].position.y > 20){
+            scene.remove(bullets[index]);
+            bullets.splice(index, 1);
+        }
+    }
+    
     // Render the scene.
     renderer.render(scene, camera);
+    
+};
+
+function shoot(){
+    var num = bullets.length;
+
+    bullets[num] = new THREE.Mesh(new THREE.SphereGeometry(0.5, 10, 10), new THREE.MeshNormalMaterial());
+    bullets[num].position.x = player.object.position.x;
+    bullets[num].position.y = player.object.position.y + 7;
+    scene.add(bullets[num]);
     
 };
 
 function KeyDown(e){
     switch(e.keyCode)
     {
-        case 38: 
-                player.object.position.y += 0.5;
+        /*case 38: 
+                player.object.position.y += 0.2;
                 break;
         case 40: 
-                player.object.position.y -= 0.5; 
-                break;
+                player.object.position.y -= 0.2; 
+                break;*/
         case 39:
-                player.object.position.x += 0.5;
+                player.object.position.x += 0.1 * speed;
+                
+                if(player.object.rotation.y < 30*(Math.PI/180))
+                {
+                    player.object.rotation.y += 10*(Math.PI/180);
+                }
+                
                 break;
         case 37: 
-                player.object.position.x -= 0.5;
+                player.object.position.x -= 0.1 * speed;
+                if(player.object.rotation.y > -Math.abs(30*(Math.PI/180)))
+                {
+                    player.object.rotation.y -= 10*(Math.PI/180);
+                }
+                break;
+                
+        case 32:
+                shoot();
                 break;
         
         
     };
 };
 
+function KeyUp(e){
+    switch(e.keyCode)
+    {
+        case 39:
+        case 37: 
+                player.object.rotation.y = 0;
+                break;
+        
+        
+    };
+};
+
+var debugaxis = function(axisLength){
+    //Shorten the vertex function
+    function v(x,y,z){ 
+            return new THREE.Vertex(new THREE.Vector3(x,y,z)); 
+    }
+    
+    //Create axis (point1, point2, colour)
+    function createAxis(p1, p2, color){
+            var line, lineGeometry = new THREE.Geometry(),
+            lineMat = new THREE.LineBasicMaterial({color: color, lineWidth: 1});
+            lineGeometry.vertices.push(p1, p2);
+            line = new THREE.Line(lineGeometry, lineMat);
+            scene.add(line);
+    }
+    
+    createAxis(v(-axisLength, 0, 0), v(axisLength, 0, 0), 0xFF0000);
+    createAxis(v(0, -axisLength, 0), v(0, axisLength, 0), 0x00FF00);
+    createAxis(v(0, 0, -axisLength), v(0, 0, axisLength), 0x0000FF);
+};
